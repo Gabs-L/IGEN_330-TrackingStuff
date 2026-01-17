@@ -51,15 +51,29 @@ def fade_trail():
 
 fade_trail()
 
-# Labels AFTER canvas setup
-screenCentre = tk.Label(tracker, text="...", font=("Arial", 8))
-# ... place labels ...
+# Labels:
+screenCentre = tk.Label(tracker, text="Screen Centre: --, --", font=("Arial", 8))
+mouseCoord = tk.Label(tracker, text="Mouse: --, --", font=("Arial", 8))
+screenSize = tk.Label(tracker, text="Screen Size: --, --", font=("Arial", 8))
+distance = tk.Label(tracker, text="Distance: --, --", font=("Arial", 8))
 
-# SIMPLIFIED update_display - NO canvas code!
+# placing labels manually
+screenCentre.place(x=5, y=5)
+mouseCoord.place(x=5, y=30)
+screenSize.place(x=5, y=55)
+distance.place(x=5, y=80)
+
 def update_display():
     x, y = pyautogui.position()
     activeWin = pyautogui.getActiveWindow()
-    # ... update labels only ...
+    xWin = activeWin.left + (activeWin.width // 2)
+    yWin = activeWin.top + (activeWin.height // 2)
+    mouseDist = math.dist((x, y),(xWin, yWin))
+
+    screenCentre.config(text=f"Screen Center: X: {xWin}, Y: {yWin}", anchor="nw")
+    mouseCoord.config(text=f"Mouse Coord: X: {x}, Y: {y}", anchor="nw")
+    screenSize.config(text=f"Screen Size: W: {activeWin.width}, H: {activeWin.height}", anchor="nw")
+    distance.config(text=f"Dist. from center: {mouseDist:.4f}", anchor="nw")
     tracker.after(100, update_display)  # 100ms not 10ms
 
 update_display()
