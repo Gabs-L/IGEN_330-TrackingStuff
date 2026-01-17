@@ -13,8 +13,11 @@ from threading import Thread
 from colorama import init
 
 init()  # colorama
-refRate = 10
-trackerRad = 5
+refRate = 10 # refresh rate in ms
+trackerRad = 5 # tracker radius
+trail = [] # trail storage
+MAX_TRAIL = 50  # max dots before clearing
+FADE_TIME = 2000  # fade time in ms
 lastTime = time.perf_counter()
 
 # tkinter window init
@@ -45,10 +48,26 @@ def update_display():
         x = canvas.canvasx(event.x)
         y = canvas.canvasy(event.y)
         canvas.delete("dot")
-        canvas.create_oval(x+2,y+2,x-2,y-2, fill='lime', outline='white', tags="dot")
+        dot = canvas.create_oval(x+trackerRad,y+trackerRad,x-trackerRad,y-trackerRad, fill='lime', outline='white', tags="trail")
+        trail.append((dot, time.time() * 1000))
     canvas.bind("<Motion>", on_motion)
 
+    def fade_trail():
+        current_time = time.time() * 1000
+        to_delete = [item[0] for item in trail if current_time - item[1] > FADE_TIME]
+        for dot_id in to_delete:
+            canvas.delete(dot_id)
+            trail[:] = [item for item in trail if item[0] != dot_id]
+    
+         # Limit total trail length
+        while len(trail) > MAX_TRAIL:
+            canvas.delete(trail[0][0])
+            trail.pop(0)
+
+        canvas.after(refRate, fade_trail)
+
     tracker.after(refRate, update_display)
+    fade_trail()
 
 canvas = Canvas(tracker, bg='black', highlightthickness=0)
 
