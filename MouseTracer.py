@@ -36,18 +36,17 @@ canvas.pack(fill=tk.BOTH, expand=True)
 def on_motion(event):
     x = canvas.canvasx(event.x)
     y = canvas.canvasy(event.y)
-    dot = canvas.create_oval(x+trackerRad, y+trackerRad, x-trackerRad, y-trackerRad, 
-                            fill='lime', outline='white', tags="trail")
-    trail.append((dot, time.time() * 1000))
+    dot = canvas.create_oval(x+trackerRad, y+trackerRad, x-trackerRad, y-trackerRad, outline = '', fill='red', tags="trail")
+    trail.append((dot, time.perf_counter()))
 
 canvas.bind("<Motion>", on_motion)
 
 def fade_trail():
-    current_time = time.time() * 1000
+    current_time = time.perf_counter()
     trail[:] = [(dot_id, ts) for dot_id, ts in trail if current_time - ts < FADE_TIME]
     while len(trail) > MAX_TRAIL:
         canvas.delete(trail.pop(0)[0])
-    canvas.after(100, fade_trail)
+    canvas.after(refRate, fade_trail)
 
 fade_trail()
 
@@ -74,7 +73,8 @@ def update_display():
     mouseCoord.config(text=f"Mouse Coord: X: {x}, Y: {y}", anchor="nw")
     screenSize.config(text=f"Screen Size: W: {activeWin.width}, H: {activeWin.height}", anchor="nw")
     distance.config(text=f"Dist. from center: {mouseDist:.4f}", anchor="nw")
-    tracker.after(100, update_display)  # 100ms not 10ms
+
+    tracker.after(refRate, update_display)
 
 update_display()
 tracker.mainloop()
