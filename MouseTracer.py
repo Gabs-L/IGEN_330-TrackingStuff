@@ -21,7 +21,7 @@ lastTime = time.perf_counter()
 tracker = tk.Tk()
 tracker.title("Mouse Tracker 1000")
 tracker.attributes("-topmost", True)
-tracker.attributes("-alpha",0.75)
+tracker.attributes("-alpha",0.8)
 tracker.geometry("800x800")
 tracker.resizable(True, True)
 tracker.configure(bg='black')
@@ -41,12 +41,17 @@ def update_display():
     distance.config(text=f"Dist. from center: {mouseDist:.4f}", anchor="nw")
 
     # canvas stuff
-    canvas.delete("dot")  # Only delete dot, not labels
-    canvas.create_oval(x-5, y-5, x+5, y+5, fill='lime', outline='white', tags="dot")
+    def on_motion(event):
+        x = canvas.canvasx(event.x)
+        y = canvas.canvasy(event.y)
+        canvas.delete("dot")
+        canvas.create_oval(x+2,y+2,x-2,y-2, fill='lime', outline='white', tags="dot")
+    canvas.bind("<Motion>", on_motion)
 
     tracker.after(refRate, update_display)
 
 canvas = Canvas(tracker, bg='black', highlightthickness=0)
+
 canvas.pack(fill=tk.BOTH, expand=True)
 
 # Labels:
