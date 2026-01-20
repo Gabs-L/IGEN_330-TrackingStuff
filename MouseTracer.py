@@ -14,7 +14,7 @@ from colorama import init
 
 init()  # colorama
 refRate = 10 # refresh rate in ms
-trackerRad = 5 # tracker radius
+trackerRad = 3 # tracker radius
 trail = [] # trail storage
 MAX_TRAIL = 50  # max dots before clearing
 FADE_TIME = 2000  # fade time in ms
@@ -36,7 +36,7 @@ canvas.pack(fill=tk.BOTH, expand=True)
 def on_motion(event):
     x = canvas.canvasx(event.x)
     y = canvas.canvasy(event.y)
-    dot = canvas.create_oval(x+trackerRad, y+trackerRad, x-trackerRad, y-trackerRad, outline = '', fill='red', tags="trail")
+    dot = canvas.create_oval(x-trackerRad, y-trackerRad, x+trackerRad, y+trackerRad, outline = '', fill='red', tags="trail")
     trail.append((dot, time.perf_counter()))
 
 canvas.bind("<Motion>", on_motion)
@@ -74,7 +74,15 @@ def update_display():
     screenSize.config(text=f"Screen Size: W: {activeWin.width}, H: {activeWin.height}", anchor="nw")
     distance.config(text=f"Dist. from center: {mouseDist:.4f}", anchor="nw")
 
+    canvas_width  = canvas.winfo_width()
+    canvas_height = canvas.winfo_height()
+    xWin = canvas_width // 2
+    yWin = canvas_height // 2
+
+    canvas.delete("centreDot")
+    centreDot = canvas.create_oval(xWin-trackerRad, yWin-trackerRad, xWin+trackerRad, yWin+trackerRad, outline = '', fill='lime', tags="centreDot")
     tracker.after(refRate, update_display)
+   
 
 update_display()
 tracker.mainloop()
