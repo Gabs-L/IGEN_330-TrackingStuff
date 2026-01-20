@@ -22,7 +22,7 @@ lastTime = time.perf_counter()
 
 # tkinter window init
 tracker = tk.Tk()
-tracker.title("Mouse Tracker 1000")
+tracker.title("Mouse Tracker 3000")
 tracker.attributes("-topmost", True)
 tracker.attributes("-alpha",0.8)
 tracker.geometry("800x800")
@@ -80,7 +80,7 @@ def update_display():
     yWin = canvas_height // 2
 
     canvas.delete("centreDot")
-    centreDot = canvas.create_oval(xWin-trackerRad, yWin-trackerRad, xWin+trackerRad, yWin+trackerRad, outline = '', fill='lime', tags="centreDot")
+    centreDot = canvas.create_oval(xWin-trackerRad, yWin-trackerRad-15, xWin+trackerRad, yWin+trackerRad-15, outline = '', fill='lime', tags="centreDot")
     tracker.after(refRate, update_display)
    
 
