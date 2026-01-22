@@ -1,2 +1,2 @@
 # MouseTracker
-Mouse Tracking Python Stuff
+~Mouse~ General Tracking Python Stuff
