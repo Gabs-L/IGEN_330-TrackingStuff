@@ -19,6 +19,9 @@ time.sleep(5)
 #Capture quality
 xres = 640
 yres = 480
+ 
+outputX = 0
+outputY = 0
 
 #Start feed capture
 while cap.isOpened():
@@ -27,21 +30,17 @@ while cap.isOpened():
         break
     
     frame = cv2.resize(frame, (xres, yres))
-    #print YOLO frame size
-    #print(f"Frame size: {frame.shape[0]}x{frame.shape[1]}")  # Width x Height
     
     #Run the detection model on the frame *** ONLY DETECT BOTTLE ***
-    results = model(frame, classes=[39])
+    results = model(frame, classes=[39], verbose=False)
     
     #Work on the original frame (not the annotated one)
     annotated_frame = frame.copy()
     
     #Get YOLO's annotated frame FIRST (boxes + confidence labels)
     annotated_frame = results[0].plot()
-
-    
-    outputX = 0
-    outputY = 0
+    cx, cy = xres // 2, yres // 2
+    cv2.drawMarker(annotated_frame,(cx, cy),color=(0, 255, 0),markerType=cv2.MARKER_CROSS,markerSize=20,thickness=2)
    
     #Loop through detections
     for r in results:
@@ -65,11 +64,11 @@ while cap.isOpened():
                #print(f"MOVE Y: {moveY} px")
 
                if moveX > 0:
-                   outputX = 180
-                   print(f"moving RIGHT", end='\r', flush=True)
+                   outputX = 110
+                   print(f"moving RIGHT")
                else: 
-                   output = 90
-                   print(f"moving LEFT", end='\r', flush=True)
+                   output = 80
+                   print(f"moving LEFT")
             
                #Print coordinates to terminal
                print(f"Bottle center: ({center_x}, {center_y})")
