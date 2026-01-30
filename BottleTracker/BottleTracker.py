@@ -65,13 +65,13 @@ while cap.isOpened():
 
                if moveX > 0:
                    outputX = 110
-                   print(f"moving RIGHT")
+                   print(f"moving RIGHT         ", end="\r")
                else: 
                    output = 80
-                   print(f"moving LEFT")
+                   print(f"moving LEFT          ", end="\r")
             
                #Print coordinates to terminal
-               print(f"Bottle center: ({center_x}, {center_y})")
+               #print(f"Bottle center: ({center_x}, {center_y})")
 
     #Display the image
     cv2.imshow('YOLOv12 Webcam Detection', annotated_frame)
