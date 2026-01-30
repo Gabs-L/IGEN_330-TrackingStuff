@@ -10,16 +10,15 @@ import time
 
 #Load model from root directory
 model = YOLO('yolo12n.pt')
-cap = cv2.VideoCapture(0)
-if not cap.isOpened():
-    print("Error: Could not open webcam")
-    exit()
-#time.sleep(5)
+#cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW) #Windows only really, change for when using SBC
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+time.sleep(5)
 
 #Capture quality
 xres = 640
-yres = 384
-
+yres = 480
 
 #Start feed capture
 while cap.isOpened():
@@ -29,7 +28,7 @@ while cap.isOpened():
     
     frame = cv2.resize(frame, (xres, yres))
     #print YOLO frame size
-    print(f"Frame size: {frame.shape[0]}x{frame.shape[1]}")  # Width x Height
+    #print(f"Frame size: {frame.shape[0]}x{frame.shape[1]}")  # Width x Height
     
     #Run the detection model on the frame *** ONLY DETECT BOTTLE ***
     results = model(frame, classes=[39])
@@ -39,6 +38,10 @@ while cap.isOpened():
     
     #Get YOLO's annotated frame FIRST (boxes + confidence labels)
     annotated_frame = results[0].plot()
+
+    
+    outputX = 0
+    outputY = 0
    
     #Loop through detections
     for r in results:
@@ -58,9 +61,16 @@ while cap.isOpened():
                #Centering Code:
                moveX = int(center_x-xres/2)
                moveY = int(center_y-yres/2)
-               print(f"MOVE X: {moveX} px")
-               print(f"MOVE Y: {moveY} px")
-               
+               #print(f"MOVE X: {moveX} px")
+               #print(f"MOVE Y: {moveY} px")
+
+               if moveX > 0:
+                   outputX = 180
+                   print(f"moving RIGHT", end='\r', flush=True)
+               else: 
+                   output = 90
+                   print(f"moving LEFT", end='\r', flush=True)
+            
                #Print coordinates to terminal
                print(f"Bottle center: ({center_x}, {center_y})")
 
