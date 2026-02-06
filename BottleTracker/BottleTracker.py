@@ -8,20 +8,36 @@ import cv2
 from ultralytics import YOLO
 import serial
 import time
+import torch
 
 #Load model from root directory
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+# Check CUDA is available (nvidia gpus only tho)
+print("PyTorch version:", torch.__version__)
+print("CUDA available:", torch.cuda.is_available())
+print("CUDA version:", torch.version.cuda)
+print("GPU count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("GPU:", torch.cuda.get_device_name(0))
+
 model = YOLO('yolo12n.pt')
+model.to(device)                 # move model to GPU/CPU once
+model.fuse()                     # small speed-up on some backends
+model.overrides['verbose'] = False
+
 
 #Arduino stuff
 serialPort = "COM3"
-arduino = serial.Serial(port=serialPort, baudrate=115200, timeout=1)
+arduino = serial.Serial(port=serialPort, baudrate=115200, timeout=0)
 time.sleep(2)  # wait for Arduino to reset
 
 #cap = cv2.VideoCapture(0)
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW) #Windows only really, change for when using SBC
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-time.sleep(5)
+cap.set(cv2.CAP_PROP_FPS, 30) # SET FPS HERE
+time.sleep(1)
 
 #Capture quality
 xres = 640
@@ -73,11 +89,11 @@ while cap.isOpened():
                #print(f"MOVE Y: {moveY} px")
 
                if moveX > 0:
-                   outputX = 91
+                   outputX = 95
                    print(f"moving RIGHT: {outputX}     ", end="\r")
                    arduino.write(f"{outputX}\n".encode()) 
                else: 
-                   outputX = 89
+                   outputX = 85
                    print(f"moving LEFT: {outputX}     ", end="\r")
                    arduino.write(f"{outputX}\n".encode())
                
