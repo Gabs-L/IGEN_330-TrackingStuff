@@ -10,105 +10,59 @@ import serial
 import time
 import torch
 
-#Load model from root directory
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-# Check CUDA is available (nvidia gpus only tho)
 print("PyTorch version:", torch.__version__)
 print("CUDA available:", torch.cuda.is_available())
 print("CUDA version:", torch.version.cuda)
-print("GPU count:", torch.cuda.device_count())
 if torch.cuda.is_available():
     print("GPU:", torch.cuda.get_device_name(0))
 
 model = YOLO('yolo12n.pt')
-model.to(device)                 # move model to GPU/CPU once
-model.fuse()                     # small speed-up on some backends
+model.to(device)
+model.fuse()              
 model.overrides['verbose'] = False
 
-
-#Arduino stuff
-serialPort = "COM3"
-arduino = serial.Serial(port=serialPort, baudrate=115200, timeout=0)
-time.sleep(2)  # wait for Arduino to reset
-
-#cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW) #Windows only really, change for when using SBC
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-cap.set(cv2.CAP_PROP_FPS, 30) # SET FPS HERE
+# cap.set(cv2.CAP_PROP_FPS, 30)
+cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 time.sleep(1)
 
-#Capture quality
-xres = 640
-yres = 480
- 
-outputX = 90
-outputY = 0
+xres, yres = 640, 480
+outputX, outputY = 90, 90
+cx, cy = xres//2, yres//2
 
-#Start feed capture
 while cap.isOpened():
-    ret, frame = cap.read()
+    if not cap.grab():
+        break
+    ret, frame = cap.retrieve()
     if not ret:
         break
     
     frame = cv2.resize(frame, (xres, yres))
-    
-    #Run the detection model on the frame *** ONLY DETECT BOTTLE ***
     results = model(frame, classes=[39], verbose=False)
-    
-    #Work on the original frame (not the annotated one)
     annotated_frame = frame.copy()
-    
-    #Get YOLO's annotated frame FIRST (boxes + confidence labels)
     annotated_frame = results[0].plot()
-    cx, cy = xres // 2, yres // 2
-    cv2.drawMarker(annotated_frame,(cx, cy),color=(0, 255, 0),markerType=cv2.MARKER_CROSS,markerSize=20,thickness=2)
     bottleFound = False
-   
-    #Loop through detections
+    
     for r in results:
-       boxes = r.boxes
-       if boxes is not None:
-           for box in boxes:
-               #Get bounding box coordinates (x1, y1, x2, y2)
-               x1, y1, x2, y2 = box.xyxy[0].tolist()
-               bottleFound = True
-               
-               #Calculate center point
-               center_x = int((x1 + x2) / 2)
-               center_y = int((y1 + y2) / 2)
-               
-               #Draw red dot (circle) at center
-               cv2.circle(annotated_frame, (center_x, center_y), 5, (0, 0, 255), -1)
-               
-               #Centering Code:
-               moveX = int(center_x-xres/2)
-               moveY = int(center_y-yres/2)
-               #print(f"MOVE X: {moveX} px")
-               #print(f"MOVE Y: {moveY} px")
+        boxes = r.boxes
+        if boxes is not None:
+            for box in boxes:
+                x1, y1, x2, y2 = box.xyxy[0].tolist()
+                bottleFound = True
+                center_x = int((x1 + x2) / 2)
+                center_y = int((y1 + y2) / 2)
+                moveX = int(center_x-xres/2)
+                moveY = int(center_y-yres/2)
+                cv2.circle(annotated_frame, (center_x, center_y), 5, (0, 0, 255), -1)
 
-               if moveX > 0:
-                   outputX = 95
-                   print(f"moving RIGHT: {outputX}     ", end="\r")
-                   arduino.write(f"{outputX}\n".encode()) 
-               else: 
-                   outputX = 85
-                   print(f"moving LEFT: {outputX}     ", end="\r")
-                   arduino.write(f"{outputX}\n".encode())
-               
-               #Print coordinates to terminal
-               #print(f"Bottle center: ({center_x}, {center_y})")
+    cv2.drawMarker(annotated_frame,(cx, cy),color=(0, 255, 0),markerType=cv2.MARKER_CROSS,markerSize=20,thickness=2)
+    cv2.imshow('Webcam Detection', annotated_frame)
 
-    if not bottleFound:
-        outputX = 90
-        arduino.write(f"{outputX}\n".encode())
-
-    #Display the image
-    cv2.imshow('YOLOv12 Webcam Detection', annotated_frame)
-    #End capture if "esc" is pressed
     if cv2.waitKey(1) & 0xFF == 27:
         break
-#Release the feed capture and close respective windows    
+
 cap.release()
 cv2.destroyAllWindows()
