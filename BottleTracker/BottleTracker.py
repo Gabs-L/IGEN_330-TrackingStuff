@@ -39,7 +39,7 @@ while cap.isOpened():
     ret, frame = cap.retrieve()
     if not ret:
         break
-    
+    prevTime = time.time()
     frame = cv2.resize(frame, (xres, yres))
     results = model(frame, classes=[39], verbose=False)
     annotated_frame = frame.copy()
@@ -52,13 +52,17 @@ while cap.isOpened():
             for box in boxes:
                 x1, y1, x2, y2 = box.xyxy[0].tolist()
                 bottleFound = True
-                center_x = int((x1 + x2) / 2)
-                center_y = int((y1 + y2) / 2)
+                center_x = int((x1 + x2)/2)
+                center_y = int((y1 + y2)/2)
                 moveX = int(center_x-xres/2)
                 moveY = int(center_y-yres/2)
-                cv2.circle(annotated_frame, (center_x, center_y), 5, (0, 0, 255), -1)
+                cv2.circle(annotated_frame, (center_x, center_y), 2, (0, 0, 255), -1)
 
-    cv2.drawMarker(annotated_frame,(cx, cy),color=(0, 255, 0),markerType=cv2.MARKER_CROSS,markerSize=20,thickness=2)
+    cv2.drawMarker(annotated_frame,(cx, cy),color=(0, 255, 0),markerType=cv2.MARKER_CROSS,markerSize=20,thickness=1)
+    currTime = time.time()
+    fps = 1/(currTime-prevTime)
+    prevTime = currTime
+    cv2.putText(annotated_frame, f"FPS: {int(fps)}", (10, 20),cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 1)
     cv2.imshow('Webcam Detection', annotated_frame)
 
     if cv2.waitKey(1) & 0xFF == 27:
