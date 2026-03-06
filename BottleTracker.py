@@ -42,6 +42,9 @@ xres, yres = 1200, 900 # can also be set to higher (320, 240 / 640, 480 / 1200, 
 cx, cy = xres//2, yres//2
 frameNum = 0
 frameSkip = 0
+fontScale = 1.5     #1
+fontThicc = 2       #1
+dotScale = 3        #2
 
 while cap.isOpened():
     if not cap.grab():
@@ -68,11 +71,20 @@ while cap.isOpened():
                     center_y = int((y1 + y2)/2)
                     moveX = int(center_x-xres/2)
                     moveY = int(center_y-yres/2)
-                    cv2.circle(annotated_frame, (center_x, center_y), 2, (0, 0, 255), -1)
-        cv2.drawMarker(annotated_frame,(cx, cy),color=(0, 255, 0),markerType=cv2.MARKER_CROSS,markerSize=20,thickness=1)
+
+                    cv2.circle(annotated_frame, (center_x, center_y), dotScale, (0, 0, 255), -1)
+                    conf_val = float(box.conf[0])
+                    label = f"{conf_val:.0%}"
+                    offset_x, offset_y = 6, -6  # offset tag up and to the right of the ID dot
+                    label_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, fontScale, fontThicc)
+                    tag_x = center_x + offset_x
+                    tag_y = center_y + offset_y
+                    cv2.rectangle(annotated_frame,(tag_x, tag_y - label_size[1] - 2), (tag_x + label_size[0] + 4, tag_y + 2), (0, 0, 255), -1)
+                    cv2.putText(annotated_frame, label, (tag_x + 2, tag_y), cv2.FONT_HERSHEY_PLAIN, fontScale, (255, 255, 255), fontThicc)
+        cv2.drawMarker(annotated_frame, (cx, cy), color=(0, 255, 0), markerType = cv2.MARKER_CROSS, markerSize = 20, thickness = 1)
         currTime = time.time()
         fps = 1/(currTime-prevTime)
-        cv2.putText(annotated_frame, f"FPS: {int(fps)}", (10, 20),cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 1)
+        cv2.putText(annotated_frame, f"FPS: {int(fps)}", (10, 20),cv2.FONT_HERSHEY_PLAIN, fontScale, (0, 255, 0), fontThicc)
         cv2.imshow('Webcam Detection', annotated_frame)
         frameNum = 0
     else:
