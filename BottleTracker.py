@@ -22,6 +22,26 @@ model.to(device)
 model.fuse()              
 model.overrides['verbose'] = False
 
+#Serial Stuffs:
+SERIAL_PORT = 'COM3'
+BAUD_RATE = 9600 # MAKE SURE MATCHING WITH ARDUINO
+try:
+    arduino = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    time.sleep(2)  # wait for Arduino to reset after connection
+    print(f"Serial connected on {SERIAL_PORT} at {BAUD_RATE} baud")
+except serial.SerialException as e: # Fancy Claude.ai error handling
+    print(f"WARNING: Serial not available ({e}). Running without Arduino.")
+    arduino = None
+
+def send_to_arduino(arduino, moveX, moveY): # Sends move commands to arduino as a string
+    if arduino and arduino.is_open:
+        try:
+            msg = f"{moveX},{moveY}\n"
+            arduino.write(msg.encode('utf-8'))
+        except serial.SerialException as e:
+            print(f"Serial write error: {e}")
+
+# Capture Stuffs
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -45,6 +65,9 @@ frameSkip = 0
 fontScale = 1.5     #1
 fontThicc = 2       #1
 dotScale = 3        #2
+serialFrames = 3 # limit number of frames sent
+serialFrameCount = 0
+
 
 while cap.isOpened():
     if not cap.grab():
@@ -59,6 +82,9 @@ while cap.isOpened():
     annotated_frame = frame.copy()
     # annotated_frame = results[0].plot()
     bottleFound = False
+    moveX, moveY = 0, 0 # default to 0 if nothing found
+
+
     
     if frameNum >= frameSkip:
         for r in results:
@@ -81,6 +107,13 @@ while cap.isOpened():
                     tag_y = center_y + offset_y
                     cv2.rectangle(annotated_frame,(tag_x, tag_y - label_size[1] - 2), (tag_x + label_size[0] + 4, tag_y + 2), (0, 0, 255), -1)
                     cv2.putText(annotated_frame, label, (tag_x + 2, tag_y), cv2.FONT_HERSHEY_PLAIN, fontScale, (255, 255, 255), fontThicc)
+
+        # Sending Stuffs to Arduino
+        serialFrameCount += 1
+        if serialFrameCount >= serialFrames:
+            send_to_arduino(arduino, moveX if bottleFound else 0, moveY if bottleFound else 0)
+            serialFrameCount = 0
+
         cv2.drawMarker(annotated_frame, (cx, cy), color=(0, 255, 0), markerType = cv2.MARKER_CROSS, markerSize = 20, thickness = 1)
         currTime = time.time()
         fps = 1/(currTime-prevTime)
@@ -96,3 +129,7 @@ while cap.isOpened():
 
 cap.release()
 cv2.destroyAllWindows()
+
+if arduino and arduino.is_open:
+    arduino.close()
+    print("Serial port closed.")
