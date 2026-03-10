@@ -3,17 +3,17 @@
  
 Servo servo;
 
-const int SERVO_PIN = 9;
-const int SAFE_POS = 90;
+const int SERVOX_PIN = 9;
+const int SERVOY_PIN = 10;
+const int NEUTRAL = 90;
 const unsigned long SERIAL_TIMEOUT = 500; // ms
 
 unsigned long lastSerialTime = 0;
 
 void setup() {
   Serial.begin(9600);
-  servo.attach(SERVO_PIN);
-
-  servo.write(SAFE_POS);  // safe startup position
+  servo.attach(SERVOX_PIN);
+  servo.write(NEUTRAL);  // safe startup position
   lastSerialTime = millis();
 
   Serial.println("Arduino ready. Send 0–180.");
