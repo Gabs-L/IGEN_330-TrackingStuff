@@ -6,9 +6,9 @@ Servo servoY;
 
 const int SERVOX_PIN = 8;
 const int SERVOY_PIN = 9;
-const int CW = 180;
 const int NEUTRAL = 90;
-const int CCW = 0;
+const int focusWidth = 200;
+const float speed = 0.1; //the "P" in "PID"
 const unsigned long SERIAL_TIMEOUT = 500; // ms
 unsigned long lastSerialTime = 0;
 
@@ -26,15 +26,11 @@ void loop() {
     int moveX = Serial.parseInt();
     int moveY = Serial.parseInt();
 
-    //move x dir
-    if (moveX > 0)       servoX.write(CW);
-    else if (moveX < 0)  servoX.write(CCW);
-    else                 servoX.write(NEUTRAL);
+    int speedX = map(constrain(moveX, -focusWidth, focusWidth), -focusWidth, focusWidth, 0, 180);
+    int speedY = map(constrain(moveY, -focusWidth, focusWidth), -focusWidth, focusWidth, 0, 180);
     
-    //move y dir
-    if (moveY > 0)       servoY.write(CW);
-    else if (moveY < 0)  servoY.write(CCW);
-    else   
+    servoX.write(speedX);
+    servoY.write(speedY);
 
     lastSerialTime = millis();
   }
