@@ -117,7 +117,7 @@ while cap.isOpened():
         fps = 1/(currTime-prevTime)
         cv2.putText(annotated_frame, f"FPS: {int(fps)}", (10, 20),cv2.FONT_HERSHEY_PLAIN, fontScale, (0, 255, 0), fontThicc)
         cv2.putText(annotated_frame, f"MoveX: {int(moveX)}", (10, 40),cv2.FONT_HERSHEY_PLAIN, fontScale, (0, 0, 0), fontThicc)
-        cv2.putText(annotated_frame, f"MoveY: {int(moveY)}", (160, 40),cv2.FONT_HERSHEY_PLAIN, fontScale, (0, 0, 0), fontThicc)
+        cv2.putText(annotated_frame, f"MoveY: {int(moveY)}", (200, 40),cv2.FONT_HERSHEY_PLAIN, fontScale, (0, 0, 0), fontThicc)
         cv2.imshow('Webcam Detection', annotated_frame)
         frameNum = 0
     else:
