@@ -1,41 +1,47 @@
 #include <Arduino.h>
 #include <Servo.h>
  
-Servo servo;
+Servo servoX;
+Servo servoY;
 
-const int SERVOX_PIN = 9;
-const int SERVOY_PIN = 10;
+const int SERVOX_PIN = 8;
+const int SERVOY_PIN = 9;
+const int CW = 180;
 const int NEUTRAL = 90;
+const int CCW = 0;
 const unsigned long SERIAL_TIMEOUT = 500; // ms
-
 unsigned long lastSerialTime = 0;
 
 void setup() {
   Serial.begin(9600);
-  servo.attach(SERVOX_PIN);
-  servo.write(NEUTRAL);  // safe startup position
+  servoX.attach(SERVOX_PIN);
+  servoY.attach(SERVOY_PIN);
+  servoX.write(NEUTRAL);
+  servoY.write(NEUTRAL);
   lastSerialTime = millis();
-
-  Serial.println("Arduino ready. Send 0–180.");
 }
 
 void loop() {
+  if (Serial.available() > 0){
+    int moveX = Serial.parseInt();
+    int moveY = Serial.parseInt();
 
-  // Check for incoming serial data
-  if (Serial.available() > 0) {
-    int value = Serial.parseInt();   // expects 0–180
+    //move x dir
+    if (moveX > 0)       servoX.write(CW);
+    else if (moveX < 0)  servoX.write(CCW);
+    else                 servoX.write(NEUTRAL);
+    
+    //move y dir
+    if (moveY > 0)       servoY.write(CW);
+    else if (moveY < 0)  servoY.write(CCW);
+    else   
 
-    if (value >= 0 && value <= 180) {
-      servo.write(value);
-      lastSerialTime = millis();   // reset watchdog
-
-      Serial.print("Input value: ");
-      Serial.println(value);
-    }
+    lastSerialTime = millis();
   }
 
-  // WATCHDOG: stop if serial goes silent
+  //return to neutral if no instruction
   if (millis() - lastSerialTime > SERIAL_TIMEOUT) {
-    servo.write(NEUTRAL);   // stop / center
+    servoX.write(NEUTRAL);
+    servoY.write(NEUTRAL);
   }
 }
