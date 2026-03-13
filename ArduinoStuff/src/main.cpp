@@ -36,6 +36,6 @@ void loop() {
 
   // WATCHDOG: stop if serial goes silent
   if (millis() - lastSerialTime > SERIAL_TIMEOUT) {
-    servo.write(SAFE_POS);   // stop / center
+    servo.write(NEUTRAL);   // stop / center
   }
 }
