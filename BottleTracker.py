@@ -21,7 +21,8 @@ model = YOLO('yolo12n.pt')
 model.to(device)
 model.fuse()              
 model.overrides['verbose'] = False
-
+xRes = 160 #800, 640, 400, 320, 160
+yRes = 120 #600, 480, 300, 240, 120
 #Serial Stuffs:
 SERIAL_PORT = 'COM3'
 BAUD_RATE = 9600 # MAKE SURE MATCHING WITH ARDUINO
@@ -43,8 +44,8 @@ def send_to_arduino(arduino, moveX, moveY): # Sends move commands to arduino as 
 
 # Capture Stuffs
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, xRes)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, yRes)
 # cap.set(cv2.CAP_PROP_FPS, 30)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
