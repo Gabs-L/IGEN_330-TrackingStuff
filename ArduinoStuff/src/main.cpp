@@ -26,6 +26,7 @@ void loop() {
     int moveX = Serial.parseInt();
     int moveY = Serial.parseInt();
 
+    //constrains focus width and maps to 0 to 180 for proportionally driven movement within that range
     int speedX = map(constrain(moveX, -focusWidth, focusWidth), -focusWidth, focusWidth, 0, 180);
     int speedY = map(constrain(moveY, -focusWidth, focusWidth), -focusWidth, focusWidth, 0, 180);
     
