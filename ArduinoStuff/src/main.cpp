@@ -7,12 +7,12 @@ Servo servoY;
 const int SERVOX_PIN = 8;
 const int SERVOY_PIN = 9;
 const int NEUTRAL = 90;
-const int focusWidth = 200;
+const int focusWidth = 500;
 const unsigned long SERIAL_TIMEOUT = 500; // ms
 unsigned long lastSerialTime = 0;
 
 float yAngle = 90.0;
-const float ySpeed = 0.05;
+const float ySpeed = 0.1;
 
 void setup() {
   Serial.begin(9600);
