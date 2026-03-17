@@ -1,6 +1,5 @@
 """
 Created on Fri Nov 21 16:51:34 2025
-
 @author: G
 """
 #import libraries
@@ -21,8 +20,8 @@ model = YOLO('yolo12n.pt')
 model.to(device)
 model.fuse()              
 model.overrides['verbose'] = False
-xRes = 160 #800, 640, 400, 320, 160
-yRes = 120 #600, 480, 300, 240, 120
+xRes = 640 #800, 640, 400, 320, 160
+yRes = 480 #600, 480, 300, 240, 120
 #Serial Stuffs:
 SERIAL_PORT = 'COM3'
 BAUD_RATE = 9600 # MAKE SURE MATCHING WITH ARDUINO
