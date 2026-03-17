@@ -46,8 +46,9 @@ def send_to_arduino(arduino, moveX, moveY): # Sends move commands to arduino as 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, xRes)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, yRes)
-# cap.set(cv2.CAP_PROP_FPS, 30)
+#cap.set(cv2.CAP_PROP_FPS, 60)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+print(f"FPS: {cap.get(cv2.CAP_PROP_FPS)}")
 
 for _ in range(5):
     if cap.isOpened():
