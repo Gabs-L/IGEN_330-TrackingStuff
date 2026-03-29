@@ -51,6 +51,7 @@ fontThicc = 1       #1
 dotScale = 3        #2
 serialFrameCount = 0
 serialFrames = 5    # limit number of frames sent (how many to skip)
+confidence = 0.25
 
 
 #Serial Stuffs:
@@ -108,7 +109,7 @@ while cap.isOpened():
     
     prevTime = time.time()
     frame = cv2.resize(frame, (xres, yres))
-    results = model(frame, classes=[39], verbose=False)
+    results = model(frame, conf=confidence, verbose=False)
     annotated_frame = frame.copy()
     # annotated_frame = results[0].plot()
     tealightFound = False
