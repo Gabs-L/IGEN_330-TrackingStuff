@@ -33,6 +33,8 @@ dispY = 960
 manualSpeed = 200
 manual = False
 keysPressed = set()
+pumpOn = False
+solOpen = False
 
 #cv2 capture settings
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -120,6 +122,8 @@ while cap.isOpened():
         if 'd' in keysPressed: moveX += manualSpeed
         if 'w' in keysPressed: moveY -= manualSpeed
         if 's' in keysPressed: moveY += manualSpeed
+        if 'o' in keysPressed: solOpen != solOpen
+        if 'p' in keysPressed: pumpOn = True
         send_to_arduino(moveX, moveY)
     else:
         # CV tracking

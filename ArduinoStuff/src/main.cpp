@@ -8,6 +8,7 @@ const int SERVOX_PIN = 8;
 const int SERVOY_PIN = 9;
 const int NEUTRAL = 90;
 const int focusWidth = 500;
+const int sprayRad = 250;
 const unsigned long SERIAL_TIMEOUT = 500; // ms
 unsigned long lastSerialTime = 0;
 
