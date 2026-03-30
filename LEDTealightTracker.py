@@ -24,8 +24,8 @@ model.fuse()
 model.overrides['verbose'] = False
 
 #Frame resolutions
-xRes = 800 #800, 640, 400, 320, 160
-yRes = 600 #600, 480, 300, 240, 120
+xRes = 640 #800, 640, 400, 320, 160
+yRes = 480 #600, 480, 300, 240, 120
 dispX = 1280
 dispY = 960
 
@@ -68,10 +68,13 @@ except serial.SerialException as e: # Fancy Claude.ai error handling
     arduino = None
 
 # Arduino Stuffs (sends move commands to arduino as a string)
-def send_to_arduino(moveX, moveY): 
+def send_to_arduino(moveX, moveY, solenoid=None, pumpVal=None): 
     if arduino and arduino.is_open:
         try:
-            msg = arduino.write(f"{moveX},{moveY}\n".encode('utf-8'))
+            if solenoid is not None and pumpVal is not None:
+                arduino.write(f"0,{moveX},{moveY},{solenoid},{pumpVal}\n".encode('utf-8')) # manual mode
+            else: 
+                arduino.write(f"1,{moveX},{moveY}\n".encode('utf-8')) # auto mode
         except serial.SerialException as e:
             print(f"Serial write error: {e}")
 
@@ -122,9 +125,9 @@ while cap.isOpened():
         if 'd' in keysPressed: moveX += manualSpeed
         if 'w' in keysPressed: moveY -= manualSpeed
         if 's' in keysPressed: moveY += manualSpeed
-        if 'o' in keysPressed: solOpen != solOpen
-        if 'p' in keysPressed: pumpOn = True
-        send_to_arduino(moveX, moveY)
+        if 'o' in keysPressed: solOpen = not solOpen
+        pumpOn = 'p' in keysPressed
+        send_to_arduino(moveX, moveY, 1 if solOpen else 0, 5 if pumpOn else 0)
     else:
         # CV tracking
         for r in results:
@@ -147,6 +150,7 @@ while cap.isOpened():
  
         serialFrameCount += 1
         if serialFrameCount >= serialFrames:
+            solenoid = 0
             send_to_arduino(moveX if tealightFound else 0, moveY if tealightFound else 0)
             serialFrameCount = 0
  
