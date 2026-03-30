@@ -84,11 +84,11 @@ def on_press(key):
     if key == keyboard.Key.space:
         manual = not manual
         print(f"[Mode] {'MANUAL' if manual else 'AUTO'}")
-    elif hasattr(key, 'char') and key.char in ('w', 'a', 's', 'd'):
+    elif hasattr(key, 'char') and key.char in ('w', 'a', 's', 'd', 'o', 'p'):
         keysPressed.add(key.char)
  
 def on_release(key):
-    if hasattr(key, 'char') and key.char in ('w', 'a', 's', 'd'):
+    if hasattr(key, 'char') and key.char in ('w', 'a', 's', 'd', 'o', 'p'):
         keysPressed.discard(key.char)
  
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
@@ -125,7 +125,9 @@ while cap.isOpened():
         if 'd' in keysPressed: moveX += manualSpeed
         if 'w' in keysPressed: moveY -= manualSpeed
         if 's' in keysPressed: moveY += manualSpeed
-        if 'o' in keysPressed: solOpen = not solOpen
+        if 'o' in keysPressed: 
+            solOpen = not solOpen 
+            keysPressed.discard('o')
         pumpOn = 'p' in keysPressed
         send_to_arduino(moveX, moveY, 1 if solOpen else 0, 5 if pumpOn else 0)
     else:
@@ -163,6 +165,13 @@ while cap.isOpened():
     mode_label = "MODE: MANUAL" if manual else "MODE: AUTO"
     mode_color = (0, 100, 255) if manual else (0, 255, 0)
     cv2.putText(annotated_frame, mode_label, (10, 80), cv2.FONT_HERSHEY_PLAIN, fontScale, mode_color, fontThicc)
+    if manual:
+            sol_label = "SOLENOID: ON" if solOpen else "SOLENOID: OFF"
+            sol_color = (0, 255, 0) if solOpen else (0, 150, 255)
+            cv2.putText(annotated_frame, sol_label, (10, 100), cv2.FONT_HERSHEY_PLAIN, fontScale, sol_color, fontThicc)
+            pump_label = "PUMP: ON" if pumpOn else "PUMP: OFF"
+            pump_color = (0, 255, 0) if pumpOn else (0, 200, 255)
+            cv2.putText(annotated_frame, pump_label, (10, 120), cv2.FONT_HERSHEY_PLAIN, fontScale, pump_color, fontThicc)
     
     display_frame = cv2.resize(annotated_frame, (dispX, dispY))
     cv2.imshow('Webcam Detection', display_frame)
