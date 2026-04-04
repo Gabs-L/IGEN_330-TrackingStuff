@@ -18,7 +18,7 @@ if torch.cuda.is_available():
     print("GPU:", torch.cuda.get_device_name(0))
 
 #Model setup and frame resolutions
-model = YOLO('LEDTealights.pt')
+model = YOLO('Model1_200_30_best.pt')
 model.to(device)
 model.fuse()              
 model.overrides['verbose'] = False
@@ -143,8 +143,10 @@ while cap.isOpened():
                     moveY = int(center_y - yres / 2)
  
                     cv2.circle(annotated_frame, (center_x, center_y), dotScale, (0, 0, 255), -1)
+                    cls_idx = int(box.cls[0])
+                    class_name = model.names[cls_idx]
                     conf_val = float(box.conf[0])
-                    label = f"{conf_val:.0%}"
+                    label = f"{class_name} {conf_val:.0%}"
                     label_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, fontScale, fontThicc)
                     tx, ty = center_x + 6, center_y - 6
                     cv2.rectangle(annotated_frame, (tx, ty - label_size[1] - 2), (tx + label_size[0] + 4, ty + 2), (0, 0, 255), -1)
