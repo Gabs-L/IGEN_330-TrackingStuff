@@ -18,7 +18,7 @@ if torch.cuda.is_available():
     print("GPU:", torch.cuda.get_device_name(0))
 
 #Model setup and frame resolutions
-model = YOLO('Model1_200_30_best.pt')
+model = YOLO('plswork_200_30_best.pt')
 model.to(device)
 model.fuse()              
 model.overrides['verbose'] = False
@@ -53,7 +53,7 @@ fontThicc = 1       #1
 dotScale = 3        #2
 serialFrameCount = 0
 serialFrames = 5    # limit number of frames sent (how many to skip)
-confidence = 0.25
+confidence = 0.5
 
 
 #Serial Stuffs:
