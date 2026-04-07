@@ -56,7 +56,7 @@ serialFrames = 2    # limit number of frames sent (how many to skip)
 confidence = 0.5
 
 #Serial Stuffs:
-SERIAL_PORT = 'COM6' #MAKE SURE MATCHES WITH ARDUINO
+SERIAL_PORT = 'COM3' #MAKE SURE MATCHES WITH ARDUINO
 BAUD_RATE = 9600 # MAKE SURE MATCHING WITH ARDUINO
 try:
     arduino = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
