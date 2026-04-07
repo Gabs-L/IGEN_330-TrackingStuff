@@ -30,7 +30,7 @@ dispX = 1280
 dispY = 960
 
 #Manual mode vars
-manualSpeed = 200
+manualSpeed = 150 #150
 manual = False
 keysPressed = set()
 pumpOn = False
