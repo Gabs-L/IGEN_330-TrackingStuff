@@ -26,11 +26,15 @@ const float autoPumpPower = 1; // (0-1)
 
 void setup() {
   Serial.begin(9600);
-  Serial.setTimeout(10);
+  Serial.setTimeout(50); //may need to increase
+
+  pinMode(LED_BUILTIN, OUTPUT);
+
   servoX.attach(SERVOX_PIN);
   servoY.attach(SERVOY_PIN);
   pinMode(SOLENOID_PIN,OUTPUT);
   pinMode(PUMP_PIN, OUTPUT);
+
   servoX.write(NEUTRAL);
   servoY.write((int)yAngle);
   digitalWrite(SOLENOID_PIN, LOW);
@@ -39,17 +43,31 @@ void setup() {
   lastSerialTime = millis();
 }
 
+//BlinkyLoop
+void blinkN(int n) {
+  for (int i = 0; i < n; i++) {
+    digitalWrite(LED_BUILTIN, HIGH); delay(150);
+    digitalWrite(LED_BUILTIN, LOW);  delay(150);
+  }
+  delay(400);
+}
+
 void loop() {
   if (Serial.available() > 0){
+    blinkN(1);
     char buffer[64];
     int len = Serial.readBytesUntil('\n', buffer, sizeof(buffer)-1);
     buffer[len] = '\0';
 
     int mode, moveX, moveY, solenoid, pumpIn;
     int found  = sscanf(buffer, "%d,%d,%d,%d,%d", &mode, &moveX, &moveY, &solenoid, &pumpIn);
-    if (found >= 3) {
+    blinkN(found);
+    if (found == 5) {
       lastSerialTime = millis();
-      if (mode == 0 && found == 5) { // MANUAL
+      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // Diagnostic LED
+      Serial.print("Got: mode="); Serial.print(mode);
+      Serial.print(" pump="); Serial.println(pumpIn);
+      if (mode == 0) { // MANUAL
         // Explicitly map the 0-5 scale from Python to 0-255 for the Pump
         int pumpVal = map(pumpIn, 0, 5, 0, 255);
         digitalWrite(SOLENOID_PIN, (solenoid == 1) ? HIGH : LOW);

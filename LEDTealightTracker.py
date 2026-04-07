@@ -57,7 +57,7 @@ confidence = 0.65
 
 
 #Serial Stuffs:
-SERIAL_PORT = 'COM3'
+SERIAL_PORT = 'COM6' #MAKE SURE MATCHES WITH ARDUINO
 BAUD_RATE = 9600 # MAKE SURE MATCHING WITH ARDUINO
 try:
     arduino = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
@@ -68,16 +68,14 @@ except serial.SerialException as e: # Fancy Claude.ai error handling
     arduino = None
 
 # Arduino Stuffs (sends move commands to arduino as a string)
-def send_to_arduino(moveX, moveY, solenoid=None, pumpVal=None): 
+def send_to_arduino(moveX, moveY, solenoid=0, pumpVal=0, mode=1): 
+    msg = f"{int(mode)},{int(moveX)},{int(moveY)},{int(solenoid)},{int(pumpVal)}\n"
+    print(f"[SEND] {msg.strip()}")
     if arduino and arduino.is_open:
         try:
-            if solenoid is not None and pumpVal is not None:
-                arduino.write(f"0,{moveX},{moveY},{solenoid},{pumpVal}\n".encode('utf-8')) # manual mode
-            else: 
-                arduino.write(f"1,{moveX},{moveY}\n".encode('utf-8')) # auto mode
+            arduino.write(msg.encode('utf-8'))
         except serial.SerialException as e:
             print(f"Serial write error: {e}")
-
 #Manual mode stuffs
 def on_press(key):
     global manual
@@ -132,9 +130,9 @@ while cap.isOpened():
         pumpOn = 'p' in keysPressed
         serialFrameCount += 1
         if serialFrameCount >= serialFrames:
-            send_to_arduino(moveX, moveY, int(solOpen), 5 if pumpOn else 0)
+            send_to_arduino(moveX, moveY, int(solOpen), 5 if pumpOn else 0, mode=0)
             serialFrameCount = 0
-    else:
+    else: # Auto
         # CV tracking
         for r in results:
             if r.boxes is not None:
@@ -159,7 +157,7 @@ while cap.isOpened():
         serialFrameCount += 1
         if serialFrameCount >= serialFrames:
             solenoid = 0
-            send_to_arduino(moveX if tealightFound else 0, moveY if tealightFound else 0)
+            send_to_arduino(moveX if tealightFound else 0, moveY if tealightFound else 0, 0, 0, mode=1)
             serialFrameCount = 0
  
     # HUD
