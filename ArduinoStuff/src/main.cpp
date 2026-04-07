@@ -7,25 +7,26 @@ Servo servoY;
 const int SERVOX_PIN = 8;
 const int SERVOY_PIN = 9;
 const int SOLENOID_PIN = 10;
-const int PUMP_PIN = 11;
+const int PUMP_PIN = 3;
 
 const int NEUTRAL = 90;
 const int focusWidth = 500; // 500
 const int sprayRad = 250; // 250
 
-const unsigned long SERIAL_TIMEOUT = 500; // ms
+const unsigned long SERIAL_TIMEOUT = 2000; // ms
 unsigned long lastSerialTime = 0;
 unsigned long solenoidOpened;
-const int pumpDelay = 200; // ms
+const int pumpDelay = 100; // ms
 bool solenoidOpen = false;
 
 const float xSpeed = 0.5; // (0-1)
 float yAngle = 90.0;
 const float ySpeed = 0.1; // (0-0.5)
-const float autoPumpPower = 0.5; // (0-1)
+const float autoPumpPower = 1; // (0-1)
 
 void setup() {
   Serial.begin(9600);
+  Serial.setTimeout(10);
   servoX.attach(SERVOX_PIN);
   servoY.attach(SERVOY_PIN);
   pinMode(SOLENOID_PIN,OUTPUT);
@@ -34,53 +35,55 @@ void setup() {
   servoY.write((int)yAngle);
   digitalWrite(SOLENOID_PIN, LOW);
   analogWrite(PUMP_PIN, 0);
+  // TCCR2B = (TCCR2B & 0xF8) | 0x01; //Sets uber high freq to pins 3 and 11
   lastSerialTime = millis();
 }
 
 void loop() {
   if (Serial.available() > 0){
-    int mode = Serial.parseInt();
-    int moveX = Serial.parseInt();
-    int moveY = Serial.parseInt();
+    char buffer[64];
+    int len = Serial.readBytesUntil('\n', buffer, sizeof(buffer)-1);
+    buffer[len] = '\0';
 
-    if (mode == 0){ //manual
-      int solenoid = Serial.parseInt();
-      int pumpIn = Serial.parseInt();
-      digitalWrite(SOLENOID_PIN, solenoid ? HIGH : LOW);
-      analogWrite(PUMP_PIN, map(pumpIn, 0, 5, 0, 255));
-    } else{ //auto
-      bool inRange = abs(moveX) < sprayRad;
-      if (inRange){
-        if (!solenoidOpen){
-          digitalWrite(SOLENOID_PIN, HIGH);
-          solenoidOpened = millis();
-          solenoidOpen = true;
-        }
-        if (millis() - solenoidOpened >= pumpDelay){
-          analogWrite(PUMP_PIN, (int)(255*autoPumpPower));
-        }
-      } else{ // closes both solenoid and pump at the same time
+    int mode, moveX, moveY, solenoid, pumpIn;
+    int found  = sscanf(buffer, "%d,%d,%d,%d,%d", &mode, &moveX, &moveY, &solenoid, &pumpIn);
+    if (found >= 3) {
+      lastSerialTime = millis();
+      if (mode == 0 && found == 5) { // MANUAL
+        // Explicitly map the 0-5 scale from Python to 0-255 for the Pump
+        int pumpVal = map(pumpIn, 0, 5, 0, 255);
+        digitalWrite(SOLENOID_PIN, (solenoid == 1) ? HIGH : LOW);
+        analogWrite(PUMP_PIN, pumpVal);
+      }
+      else if (mode == 1){ //auto
+        bool inRange = abs(moveX) < sprayRad;
+        if (inRange){
+          if (!solenoidOpen){
+            digitalWrite(SOLENOID_PIN, HIGH);
+            solenoidOpened = millis();
+            solenoidOpen = true;
+          }
+          if (millis() - solenoidOpened >= pumpDelay){
+            analogWrite(PUMP_PIN, (int)(255*autoPumpPower));
+          }
+        } else{ // closes both solenoid and pump at the same time
           analogWrite(PUMP_PIN, 0);
           digitalWrite(SOLENOID_PIN, LOW);
           solenoidOpen = false;
       }
     }
-      
-    //x axis servo (CR) constrains focus width and maps to 0 to 180 for proportionally driven movement within that range
-    int speedX = map(constrain(moveX, -focusWidth, focusWidth), -focusWidth, focusWidth, 0, 180);
+    int speedX = map(constrain(moveX, -focusWidth, focusWidth), -focusWidth, focusWidth, 0, 180.0);
     speedX = NEUTRAL + (int)((speedX - NEUTRAL) * xSpeed);
-    
-    //y axis servo (fixed range)
-    yAngle += moveY * ySpeed;
-    yAngle = constrain(yAngle, 0.0, 180.0);
+    yAngle = constrain(yAngle+(moveY * ySpeed), 0.0, 180.0);
     servoX.write(speedX);
     servoY.write((int)yAngle);
-
-    lastSerialTime = millis();
   }
-
+}
   //return to neutral if no instruction
   if (millis() - lastSerialTime > SERIAL_TIMEOUT) {
+    analogWrite(PUMP_PIN, 0);
+    digitalWrite(SOLENOID_PIN, LOW);
     servoX.write(NEUTRAL);
+    solenoidOpen = false;
   }
 }

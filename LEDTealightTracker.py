@@ -18,7 +18,7 @@ if torch.cuda.is_available():
     print("GPU:", torch.cuda.get_device_name(0))
 
 #Model setup and frame resolutions
-model = YOLO('plswork_200_30_best.pt')
+model = YOLO('Model1_200_30_best.pt')
 model.to(device)
 model.fuse()              
 model.overrides['verbose'] = False
@@ -52,8 +52,8 @@ fontScale = 1       #1
 fontThicc = 1       #1
 dotScale = 3        #2
 serialFrameCount = 0
-serialFrames = 5    # limit number of frames sent (how many to skip)
-confidence = 0.5
+serialFrames = 2    # limit number of frames sent (how many to skip)
+confidence = 0.65
 
 
 #Serial Stuffs:
@@ -121,6 +121,7 @@ while cap.isOpened():
     moveX, moveY = 0, 0 # default to 0 if nothing found
     if manual:
         # WASD → moveX/moveY
+        moveX, moveY = 0, 0
         if 'a' in keysPressed: moveX -= manualSpeed
         if 'd' in keysPressed: moveX += manualSpeed
         if 'w' in keysPressed: moveY -= manualSpeed
@@ -129,7 +130,10 @@ while cap.isOpened():
             solOpen = not solOpen 
             keysPressed.discard('o')
         pumpOn = 'p' in keysPressed
-        send_to_arduino(moveX, moveY, 1 if solOpen else 0, 5 if pumpOn else 0)
+        serialFrameCount += 1
+        if serialFrameCount >= serialFrames:
+            send_to_arduino(moveX, moveY, int(solOpen), 5 if pumpOn else 0)
+            serialFrameCount = 0
     else:
         # CV tracking
         for r in results:
