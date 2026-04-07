@@ -11,9 +11,10 @@ const int SOLENOID_PIN = 7;
 const int PUMP_PIN = 3;
 
 const int NEUTRAL = 90; // 0-180
-const int XfocusWidth = 250; // 500
-const int YfocusWidth = 150; // 300
+const int XfocusWidth = 150; // 500
+const int YfocusWidth = 85; // 300
 const int sprayRad = 100; // 250 is big
+float yAngle = 0;
 
 const unsigned long SERIAL_TIMEOUT = 2000; // ms
 unsigned long lastSerialTime = 0;
@@ -23,8 +24,7 @@ bool solenoidOpen = false;
 
 const float xSpeed = 0.50; // (0-1)
 // const float ySpeed = 0.15; // (0-1)
-float yAngle = 0;
-const float ySpeed = 0.03; // (0-0.5)
+const float ySpeed = 0.01; // (0.01-0.5)
 const float autoPumpPower = 1; // (0-1)
 
 void setup() {
@@ -92,9 +92,9 @@ void loop() {
       }
       int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
       // int speedY = map(constrain(moveY, -YfocusWidth, YfocusWidth), -YfocusWidth, YfocusWidth, 0, 180.0);
-      speedX = NEUTRAL + (int)((speedX-NEUTRAL) * xSpeed);
+      speedX = NEUTRAL - (int)((speedX-NEUTRAL) * xSpeed);
       // speedY = NEUTRAL + (int)((NEUTRAL-speedY) * ySpeed);
-      yAngle = constrain(yAngle+(moveY * ySpeed), 0.0, 150.0); //max defl. = 150
+      yAngle = constrain(yAngle-(moveY * ySpeed), 0.0, 130.0); //max defl. = 130
       servoX.write(speedX);
       // servoY.write(speedY);
       servoY.write((int)yAngle);
