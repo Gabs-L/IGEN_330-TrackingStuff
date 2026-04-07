@@ -7,7 +7,7 @@ Servo servoY;
 
 const int SERVOX_PIN = 8;
 const int SERVOY_PIN = 9;
-const int SOLENOID_PIN = 10;
+const int SOLENOID_PIN = 7;
 const int PUMP_PIN = 3;
 
 const int NEUTRAL = 90;
@@ -33,6 +33,7 @@ void setup() {
 
   servoX.attach(SERVOX_PIN);
   servoY.attach(SERVOY_PIN);
+  
   pinMode(SOLENOID_PIN,OUTPUT);
   pinMode(PUMP_PIN, OUTPUT);
 
@@ -40,7 +41,7 @@ void setup() {
   servoY.write((int)yAngle);
   digitalWrite(SOLENOID_PIN, LOW);
   analogWrite(PUMP_PIN, 0);
-  // TCCR2B = (TCCR2B & 0xF8) | 0x01; //Sets uber high freq to pins 3 and 11
+  TCCR2B = (TCCR2B & 0xF8) | 0x01; //Sets uber high freq to pins 3 and 11. MUST BE PUT AFTER SERVO STUFF SINCE THOSE OVERWRITE THIS
   lastSerialTime = millis();
 }
 
