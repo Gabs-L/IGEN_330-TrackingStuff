@@ -22,7 +22,7 @@ bool solenoidOpen = false;
 const float xSpeed = 0.5; // (0-1)
 float yAngle = 90.0;
 const float ySpeed = 0.1; // (0-0.5)
-const float autoPumpPower = 1; // (0-1)
+const float autoPumpPower = 0.5; // (0-1)
 
 void setup() {
   Serial.begin(9600);
@@ -43,35 +43,21 @@ void setup() {
   lastSerialTime = millis();
 }
 
-//BlinkyLoop
-void blinkN(int n) {
-  for (int i = 0; i < n; i++) {
-    digitalWrite(LED_BUILTIN, HIGH); delay(150);
-    digitalWrite(LED_BUILTIN, LOW);  delay(150);
-  }
-  delay(400);
-}
-
 void loop() {
   if (Serial.available() > 0){
-    blinkN(1);
     char buffer[64];
     int len = Serial.readBytesUntil('\n', buffer, sizeof(buffer)-1);
     buffer[len] = '\0';
-
     int mode, moveX, moveY, solenoid, pumpIn;
     int found  = sscanf(buffer, "%d,%d,%d,%d,%d", &mode, &moveX, &moveY, &solenoid, &pumpIn);
-    blinkN(found);
     if (found == 5) {
       lastSerialTime = millis();
-      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // Diagnostic LED
-      Serial.print("Got: mode="); Serial.print(mode);
-      Serial.print(" pump="); Serial.println(pumpIn);
       if (mode == 0) { // MANUAL
         // Explicitly map the 0-5 scale from Python to 0-255 for the Pump
         int pumpVal = map(pumpIn, 0, 5, 0, 255);
         digitalWrite(SOLENOID_PIN, (solenoid == 1) ? HIGH : LOW);
         analogWrite(PUMP_PIN, pumpVal);
+        digitalWrite(LED_BUILTIN, pumpVal>0 ? HIGH : LOW); // Diagnostic LED
       }
       else if (mode == 1){ //auto
         bool inRange = abs(moveX) < sprayRad;
@@ -83,10 +69,12 @@ void loop() {
           }
           if (millis() - solenoidOpened >= pumpDelay){
             analogWrite(PUMP_PIN, (int)(255*autoPumpPower));
+            digitalWrite(LED_BUILTIN, HIGH);
           }
         } else{ // closes both solenoid and pump at the same time
           analogWrite(PUMP_PIN, 0);
           digitalWrite(SOLENOID_PIN, LOW);
+          digitalWrite(LED_BUILTIN, LOW);
           solenoidOpen = false;
       }
     }

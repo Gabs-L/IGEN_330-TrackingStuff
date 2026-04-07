@@ -55,7 +55,6 @@ serialFrameCount = 0
 serialFrames = 2    # limit number of frames sent (how many to skip)
 confidence = 0.65
 
-
 #Serial Stuffs:
 SERIAL_PORT = 'COM6' #MAKE SURE MATCHES WITH ARDUINO
 BAUD_RATE = 9600 # MAKE SURE MATCHING WITH ARDUINO
