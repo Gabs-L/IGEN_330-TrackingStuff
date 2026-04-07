@@ -53,7 +53,7 @@ fontThicc = 1       #1
 dotScale = 3        #2
 serialFrameCount = 0
 serialFrames = 2    # limit number of frames sent (how many to skip)
-confidence = 0.65
+confidence = 0.5
 
 #Serial Stuffs:
 SERIAL_PORT = 'COM6' #MAKE SURE MATCHES WITH ARDUINO
@@ -67,8 +67,8 @@ except serial.SerialException as e: # Fancy Claude.ai error handling
     arduino = None
 
 # Arduino Stuffs (sends move commands to arduino as a string)
-def send_to_arduino(moveX, moveY, solenoid=0, pumpVal=0, mode=1): 
-    msg = f"{int(mode)},{int(moveX)},{int(moveY)},{int(solenoid)},{int(pumpVal)}\n"
+def send_to_arduino(moveX, moveY, solenoid=0, pumpVal=0, mode=1, found=0): 
+    msg = f"{int(mode)},{int(moveX)},{int(moveY)},{int(solenoid)},{int(pumpVal)},{int(found)}\n"
     print(f"[SEND] {msg.strip()}")
     if arduino and arduino.is_open:
         try:
@@ -129,7 +129,7 @@ while cap.isOpened():
         pumpOn = 'p' in keysPressed
         serialFrameCount += 1
         if serialFrameCount >= serialFrames:
-            send_to_arduino(moveX, moveY, int(solOpen), 5 if pumpOn else 0, mode=0)
+            send_to_arduino(moveX, moveY, int(solOpen), 5 if pumpOn else 0, mode=0, found=0)
             serialFrameCount = 0
     else: # Auto
         # CV tracking
@@ -156,7 +156,7 @@ while cap.isOpened():
         serialFrameCount += 1
         if serialFrameCount >= serialFrames:
             solenoid = 0
-            send_to_arduino(moveX if tealightFound else 0, moveY if tealightFound else 0, 0, 0, mode=1)
+            send_to_arduino(moveX, moveY, 0, 0, mode=1, found=1 if tealightFound else 0)
             serialFrameCount = 0
  
     # HUD

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Servo.h>
+#include <math.h>
  
 Servo servoX;
 Servo servoY;
@@ -11,7 +12,7 @@ const int PUMP_PIN = 3;
 
 const int NEUTRAL = 90;
 const int focusWidth = 500; // 500
-const int sprayRad = 250; // 250
+const int sprayRad = 100; // 250 is big
 
 const unsigned long SERIAL_TIMEOUT = 2000; // ms
 unsigned long lastSerialTime = 0;
@@ -48,9 +49,9 @@ void loop() {
     char buffer[64];
     int len = Serial.readBytesUntil('\n', buffer, sizeof(buffer)-1);
     buffer[len] = '\0';
-    int mode, moveX, moveY, solenoid, pumpIn;
-    int found  = sscanf(buffer, "%d,%d,%d,%d,%d", &mode, &moveX, &moveY, &solenoid, &pumpIn);
-    if (found == 5) {
+    int mode, moveX, moveY, solenoid, pumpIn, detection;
+    int received  = sscanf(buffer, "%d,%d,%d,%d,%d,%d", &mode, &moveX, &moveY, &solenoid, &pumpIn, &detection);
+    if (received == 6) {
       lastSerialTime = millis();
       if (mode == 0) { // MANUAL
         // Explicitly map the 0-5 scale from Python to 0-255 for the Pump
@@ -60,22 +61,28 @@ void loop() {
         digitalWrite(LED_BUILTIN, pumpVal>0 ? HIGH : LOW); // Diagnostic LED
       }
       else if (mode == 1){ //auto
-        bool inRange = abs(moveX) < sprayRad;
-        if (inRange){
-          if (!solenoidOpen){
-            digitalWrite(SOLENOID_PIN, HIGH);
-            solenoidOpened = millis();
-            solenoidOpen = true;
-          }
-          if (millis() - solenoidOpened >= pumpDelay){
-            analogWrite(PUMP_PIN, (int)(255*autoPumpPower));
-            digitalWrite(LED_BUILTIN, HIGH);
-          }
-        } else{ // closes both solenoid and pump at the same time
+        if (!detection) {
           analogWrite(PUMP_PIN, 0);
           digitalWrite(SOLENOID_PIN, LOW);
           digitalWrite(LED_BUILTIN, LOW);
-          solenoidOpen = false;
+        } else {
+          bool inRange = sqrt(moveX*moveX+moveY*moveY) < sprayRad;
+          if (inRange){
+            if (!solenoidOpen){
+              digitalWrite(SOLENOID_PIN, HIGH);
+              solenoidOpened = millis();
+              solenoidOpen = true;
+            }
+            if (millis() - solenoidOpened >= pumpDelay){
+              analogWrite(PUMP_PIN, (int)(255*autoPumpPower));
+              digitalWrite(LED_BUILTIN, HIGH);
+            }
+          } else{ // closes both solenoid and pump at the same time
+            analogWrite(PUMP_PIN, 0);
+            digitalWrite(SOLENOID_PIN, LOW);
+            digitalWrite(LED_BUILTIN, LOW);
+            solenoidOpen = false;
+        }
       }
     }
     int speedX = map(constrain(moveX, -focusWidth, focusWidth), -focusWidth, focusWidth, 0, 180.0);
