@@ -119,10 +119,10 @@ while cap.isOpened():
     if manual:
         # WASD → moveX/moveY
         moveX, moveY = 0, 0
-        if 'a' in keysPressed: moveX -= manualSpeed
-        if 'd' in keysPressed: moveX += manualSpeed
-        if 'w' in keysPressed: moveY -= manualSpeed
-        if 's' in keysPressed: moveY += manualSpeed
+        if 'a' in keysPressed: moveX += manualSpeed
+        if 'd' in keysPressed: moveX -= manualSpeed
+        if 'w' in keysPressed: moveY += manualSpeed
+        if 's' in keysPressed: moveY -= manualSpeed
         if 'o' in keysPressed: 
             solOpen = not solOpen 
             keysPressed.discard('o')

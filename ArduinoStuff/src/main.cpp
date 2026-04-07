@@ -5,8 +5,8 @@
 Servo servoX;
 Servo servoY;
 
-const int SERVOX_PIN = 8;
-const int SERVOY_PIN = 9;
+const int SERVOX_PIN = 9;
+const int SERVOY_PIN = 8;
 const int SOLENOID_PIN = 7;
 const int PUMP_PIN = 3;
 
@@ -21,7 +21,7 @@ unsigned long solenoidOpened;
 const int pumpDelay = 100; // ms
 bool solenoidOpen = false;
 
-const float xSpeed = 0.5; // (0-1)
+const float xSpeed = 0.75; // (0-1)
 const float ySpeed = 0.5; // (0-1)
 // float yAngle = 90.0;
 // const float ySpeed = 0.1; // (0-0.5)
@@ -44,7 +44,7 @@ void setup() {
   // servoY.write((int)yAngle);
   digitalWrite(SOLENOID_PIN, LOW);
   analogWrite(PUMP_PIN, 0);
-  TCCR2B = (TCCR2B & 0xF8) | 0x01; //Sets uber high freq to pins 3 and 11. MUST BE PUT AFTER SERVO STUFF SINCE THOSE OVERWRITE THIS
+  // TCCR2B = (TCCR2B & 0xF8) | 0x01; //Sets uber high freq to pins 3 and 11. MUST BE PUT AFTER SERVO STUFF SINCE THOSE OVERWRITE THIS
   lastSerialTime = millis();
 }
 
@@ -89,16 +89,15 @@ void loop() {
             solenoidOpen = false;
           }
         }
-        int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
-        int speedY = map(constrain(moveY, -YfocusWidth, YfocusWidth), -YfocusWidth, YfocusWidth, 0, 180.0);
-        speedX = NEUTRAL + (int)((speedX - NEUTRAL) * xSpeed);
-        speedY = NEUTRAL + (int)((speedY - NEUTRAL) * ySpeed);
-        // yAngle = constrain(yAngle+(moveY * ySpeed), 0.0, 180.0);
-        servoX.write(speedX);
-        servoY.write(speedY);
-        // servoY.write((int)yAngle);
       }
-      TCCR2B = (TCCR2B & 0xF8) | 0x01; // RE-REset Frequency on pins 3 and 11
+      int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
+      int speedY = map(constrain(moveY, -YfocusWidth, YfocusWidth), -YfocusWidth, YfocusWidth, 0, 180.0);
+      speedX = NEUTRAL + (int)((speedX - NEUTRAL) * xSpeed);
+      speedY = NEUTRAL + (int)((speedY - NEUTRAL) * ySpeed);
+      // yAngle = constrain(yAngle+(moveY * ySpeed), 0.0, 180.0);
+      servoX.write(speedX);
+      servoY.write(speedY);
+      // servoY.write((int)yAngle);
     }
   }
   //return to neutral if no instruction
