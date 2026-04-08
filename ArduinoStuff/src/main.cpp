@@ -7,8 +7,8 @@ Servo servoY;
 
 const int SERVOX_PIN = 9;
 const int SERVOY_PIN = 8;
-const int SOLENOID_PIN = 7;
-const int PUMP_PIN = 3;
+const int SOLENOID_PIN = 12;
+const int PUMP_PIN = 5;
 
 const int NEUTRAL = 90; // 0-180
 const int XfocusWidth = 150; // 500
@@ -23,7 +23,6 @@ const int pumpDelay = 100; // ms
 bool solenoidOpen = false;
 
 const float xSpeed = 0.50; // (0-1)
-// const float ySpeed = 0.15; // (0-1)
 const float ySpeed = 0.01; // (0.01-0.5)
 const float autoPumpPower = 1; // (0-1)
 
@@ -40,11 +39,9 @@ void setup() {
   pinMode(PUMP_PIN, OUTPUT);
 
   servoX.write(NEUTRAL);
-  // servoY.write(NEUTRAL);
   servoY.write((int)yAngle);
   digitalWrite(SOLENOID_PIN, LOW);
   analogWrite(PUMP_PIN, 0);
-  TCCR2B = (TCCR2B & 0xF8) | 0x01; //Sets uber high freq to pins 3 and 11. MUST BE PUT AFTER SERVO STUFF SINCE THOSE OVERWRITE THIS
   lastSerialTime = millis();
 }
 
@@ -58,13 +55,10 @@ void loop() {
     if (received == 6) {
       lastSerialTime = millis();
       if (mode == 0) { // MANUAL
-        // Explicitly map the 0-5 scale from Python to 0-255 for the Pump
         int pumpVal = map(pumpIn, 0, 5, 0, 255);
-        bool solState = (solenoid == 1);
         analogWrite(PUMP_PIN, pumpVal);
-        digitalWrite(SOLENOID_PIN, solState ? HIGH : LOW);
-        solenoidOpen = solState;
-        digitalWrite(LED_BUILTIN, pumpVal>0 ? HIGH : LOW); // Diagnostic LED
+        digitalWrite(SOLENOID_PIN, (solenoid == 1) ? HIGH : LOW);
+        digitalWrite(LED_BUILTIN, pumpVal > 0 ? HIGH : LOW); // Diagnostic LED
       }
       else if (mode == 1){ //auto
         if (!detection) {
@@ -73,13 +67,10 @@ void loop() {
           digitalWrite(LED_BUILTIN, LOW);
           solenoidOpen = false;
         } else {
-          float dist = sqrt((long)moveX*moveX+(long)moveY*moveY);
+          float dist = sqrt(abs((long)moveX)*moveX+abs((long)moveY*moveY));
           bool inRange = dist < sprayRad;
           if (inRange){
-            if (!solenoidOpen){
-              digitalWrite(SOLENOID_PIN, HIGH);
-              solenoidOpen = true;
-            }
+            solenoidOpen = true; 
             analogWrite(PUMP_PIN, (int)(255*autoPumpPower));
             digitalWrite(LED_BUILTIN, HIGH);
           } else { // closes both solenoid and pump at the same time
@@ -91,13 +82,11 @@ void loop() {
         }
       }
       int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
-      // int speedY = map(constrain(moveY, -YfocusWidth, YfocusWidth), -YfocusWidth, YfocusWidth, 0, 180.0);
       speedX = NEUTRAL - (int)((speedX-NEUTRAL) * xSpeed);
-      // speedY = NEUTRAL + (int)((NEUTRAL-speedY) * ySpeed);
       yAngle = constrain(yAngle-(moveY * ySpeed), 0.0, 130.0); //max defl. = 130
       servoX.write(speedX);
-      // servoY.write(speedY);
       servoY.write((int)yAngle);
+      // TCCR2B = (TCCR2B & 0xF8) | 0x02;
     }
   }
   //return to neutral if no instruction
@@ -105,7 +94,6 @@ void loop() {
     analogWrite(PUMP_PIN, 0);
     digitalWrite(SOLENOID_PIN, LOW);
     servoX.write(NEUTRAL);
-    // servoY.write(NEUTRAL);
     solenoidOpen = false;
   }
 }
