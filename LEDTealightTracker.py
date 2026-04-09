@@ -22,6 +22,7 @@ model = YOLO('Model1_200_30_best.pt')
 model.to(device)
 model.fuse()              
 model.overrides['verbose'] = False
+trackBest = True
 
 #Frame resolutions
 xRes = 640 #800, 640, 400, 320, 160
@@ -69,20 +70,30 @@ except serial.SerialException as e: # Fancy Claude.ai error handling
 # Arduino Stuffs (sends move commands to arduino as a string)
 def send_to_arduino(moveX, moveY, solenoid=0, pumpVal=0, mode=1, found=0): 
     msg = f"{int(mode)},{int(moveX)},{int(moveY)},{int(solenoid)},{int(pumpVal)},{int(found)}\n"
-    print(f"[SEND] {msg.strip()}")
+    # print(f"[SEND] {msg.strip()}") # DEBUG
     if arduino and arduino.is_open:
         try:
             arduino.write(msg.encode('utf-8'))
         except serial.SerialException as e:
             print(f"Serial write error: {e}")
+
+print(" ------- KEYBOARD CONTROLS ------")
+print("SPACE - TOGGLE MANUAL/AUTO \n B - TOGGLE TRACK BEST \n ---------- MANUAL MODE ---------")
+print("WASD - NAVIGATE \n O - TOGGLE SOLENOID \n P - HOLD PUMP")
+print(" --------------------------------")
+
 #Manual mode stuffs
 def on_press(key):
-    global manual
+    global manual, trackBest
     if key == keyboard.Key.space:
         manual = not manual
         print(f"[Mode] {'MANUAL' if manual else 'AUTO'}")
-    elif hasattr(key, 'char') and key.char in ('w', 'a', 's', 'd', 'o', 'p'):
-        keysPressed.add(key.char)
+    char = getattr(key, 'char', None)
+    if char == 'b':
+        trackBest = not trackBest
+        print(f"[Mode] {'BEST' if trackBest else 'ALL'}")
+    elif char in ('w', 'a', 's', 'd', 'o', 'p'):
+        keysPressed.add(char)
  
 def on_release(key):
     if hasattr(key, 'char') and key.char in ('w', 'a', 's', 'd', 'o', 'p'):
@@ -134,8 +145,9 @@ while cap.isOpened():
     else: # Auto
         # CV tracking
         for r in results:
-            if r.boxes is not None:
-                for box in r.boxes:
+            if r.boxes:
+                boxes = [max(r.boxes, key=lambda x: x.conf[0])] if trackBest else r.boxes
+                for box in boxes:
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     tealightFound = True
                     center_x = int((x1 + x2) / 2)
@@ -162,12 +174,15 @@ while cap.isOpened():
     # HUD
     fps = 1 / (time.time() - prevTime)
     cv2.drawMarker(annotated_frame, (cx, cy), (0, 255, 0), cv2.MARKER_CROSS, 20, 1)
-    cv2.putText(annotated_frame, f"FPS: {int(fps)}",      (10, 20),  cv2.FONT_HERSHEY_PLAIN, fontScale, (0, 255, 0), fontThicc)
+    cv2.putText(annotated_frame, f"FPS: {int(fps)} |",      (10, 20),  cv2.FONT_HERSHEY_PLAIN, fontScale, (0, 255, 0), fontThicc)
     cv2.putText(annotated_frame, f"MoveX: {int(moveX)}",  (10, 40),  cv2.FONT_HERSHEY_PLAIN, fontScale, (0, 255, 0), fontThicc)
     cv2.putText(annotated_frame, f"MoveY: {int(moveY)}",  (10, 60), cv2.FONT_HERSHEY_PLAIN, fontScale, (0, 255, 0), fontThicc)
     mode_label = "MODE: MANUAL" if manual else "MODE: AUTO"
     mode_color = (0, 100, 255) if manual else (0, 255, 0)
     cv2.putText(annotated_frame, mode_label, (10, 80), cv2.FONT_HERSHEY_PLAIN, fontScale, mode_color, fontThicc)
+    best_label = "TRACK: BEST" if trackBest else "TRACK: ALL"
+    best_color = (0, 255, 0) if trackBest else (200, 0, 255)
+    cv2.putText(annotated_frame, best_label, (95, 20), cv2.FONT_HERSHEY_PLAIN, fontScale, best_color, fontThicc)
     if manual:
             sol_label = "SOLENOID: ON" if solOpen else "SOLENOID: OFF"
             sol_color = (0, 255, 0) if solOpen else (0, 150, 255)
