@@ -7,6 +7,8 @@ Servo servoY;
 
 const int SERVOX_PIN = 9;
 const int SERVOY_PIN = 8;
+const int LIM_X_PIN = 6;
+const int LIM_Y_PIN = 7;
 const int SOLENOID_PIN = 12;
 const int PUMP_PIN = 5;
 
@@ -37,12 +39,16 @@ void setup() {
   
   pinMode(SOLENOID_PIN,OUTPUT);
   pinMode(PUMP_PIN, OUTPUT);
+  pinMode(LIM_X_PIN, INPUT_PULLUP);
+  pinMode(LIM_Y_PIN, INPUT_PULLUP);
 
   servoX.write(NEUTRAL);
   servoY.write((int)yAngle);
   digitalWrite(SOLENOID_PIN, LOW);
   analogWrite(PUMP_PIN, 0);
   lastSerialTime = millis();
+
+  TCCR2B = (TCCR2B & 0xF8) | 0x02;
 }
 
 void loop() {
@@ -67,10 +73,11 @@ void loop() {
           digitalWrite(LED_BUILTIN, LOW);
           solenoidOpen = false;
         } else {
-          float dist = sqrt(abs((long)moveX)*moveX+abs((long)moveY*moveY));
+          float dist = sqrt((float)moveX*moveX+(float)moveY*moveY);
           bool inRange = dist < sprayRad;
           if (inRange){
             solenoidOpen = true; 
+            digitalWrite(SOLENOID_PIN, HIGH);
             analogWrite(PUMP_PIN, (int)(255*autoPumpPower));
             digitalWrite(LED_BUILTIN, HIGH);
           } else { // closes both solenoid and pump at the same time
@@ -81,12 +88,18 @@ void loop() {
           }
         }
       }
-      int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
-      speedX = NEUTRAL - (int)((speedX-NEUTRAL) * xSpeed);
-      yAngle = constrain(yAngle-(moveY * ySpeed), 0.0, 130.0); //max defl. = 130
-      servoX.write(speedX);
-      servoY.write((int)yAngle);
-      // TCCR2B = (TCCR2B & 0xF8) | 0x02;
+      if (digitalRead(LIM_X_PIN) == HIGH){
+        int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
+        speedX = NEUTRAL - (int)((speedX-NEUTRAL) * xSpeed);
+        servoX.write(speedX);
+      } else {
+        servoX.write(NEUTRAL);
+      }
+      if (digitalRead(LIM_Y_PIN) == HIGH){
+        float yRange = constrain(moveY, -YfocusWidth, YfocusWidth);
+        yAngle = constrain(yAngle-(yRange * ySpeed), 0.0, 130.0); //max defl. = 130
+        servoY.write((int)yAngle);
+      }
     }
   }
   //return to neutral if no instruction
