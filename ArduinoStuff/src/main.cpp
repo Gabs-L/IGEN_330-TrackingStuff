@@ -18,6 +18,8 @@ const int YfocusWidth = 85; // 85 (80-90)
 const int sprayRad = 100; // 250 is big
 float yAngle = 0;
 
+int xBlocked = 0;
+
 const unsigned long SERIAL_TIMEOUT = 2000; // ms
 unsigned long lastSerialTime = 0;
 bool solenoidOpen = false;
@@ -60,7 +62,6 @@ void loop() {
 
     if (received == 6) {
       lastSerialTime = millis();
-
       bool xLimitTriggered = (digitalRead(LIM_X_PIN) == HIGH);
       bool yLimitTriggered = (digitalRead(LIM_Y_PIN) == HIGH);
 
@@ -92,12 +93,21 @@ void loop() {
         }
       }
 
-      int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
+      int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0.0, 180.0);
       speedX = NEUTRAL - (int)((speedX - NEUTRAL) * xSpeed);
       
-      if (xLimitTriggered && moveX > 0) {
-          speedX = NEUTRAL; 
+      if (xLimitTriggered ) {
+        if (xBlocked == 0) {
+          if (moveX > 0) xBlocked = 1;
+          else if (moveX < 0) xBlocked = -1;
+        }
+        if((xBlocked == 1 && moveX > 0) || (xBlocked == -1 && moveX < 0)) {
+          speedX = NEUTRAL;
+        }
+      } else {
+        xBlocked = 0;
       }
+      servoX.write(speedX);
 
       float yRange = constrain(moveY, -YfocusWidth, YfocusWidth);
       float deltaY = yRange * ySpeed;
