@@ -60,6 +60,10 @@ void loop() {
 
     if (received == 6) {
       lastSerialTime = millis();
+
+      bool xLimitTriggered = (digitalRead(LIM_X_PIN) == HIGH);
+      bool yLimitTriggered = (digitalRead(LIM_Y_PIN) == HIGH);
+
       if (mode == 0) { // MANUAL
         analogWrite(PUMP_PIN, pumpVal);
         digitalWrite(SOLENOID_PIN, (solenoid == 1) ? HIGH : LOW);
@@ -87,13 +91,28 @@ void loop() {
           }
         }
       }
+
       int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
-      speedX = NEUTRAL - (int)((speedX-NEUTRAL) * xSpeed);
-      servoX.write(speedX);
+      speedX = NEUTRAL - (int)((speedX - NEUTRAL) * xSpeed);
       
+      if (xLimitTriggered && moveX > 0) {
+          speedX = NEUTRAL; 
+      }
+
       float yRange = constrain(moveY, -YfocusWidth, YfocusWidth);
-        yAngle = constrain(yAngle-(yRange * ySpeed), 0.0, 130.0); //max defl. = 130
-        servoY.write((int)yAngle);
+      float deltaY = yRange * ySpeed;
+      float nextAngle = yAngle - deltaY;
+
+      if (yLimitTriggered) {
+          bool movingToCenter = (nextAngle > yAngle && yAngle < 65) || (nextAngle < yAngle && yAngle > 65);
+          
+          if (movingToCenter) {
+              yAngle = constrain(nextAngle, 0.0, 130.0);
+          }
+      } else {
+          yAngle = constrain(nextAngle, 0.0, 130.0);
+      }
+      servoY.write((int)yAngle);
     }
   }
   //return to neutral if no instruction
