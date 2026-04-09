@@ -31,7 +31,7 @@ dispX = 1280
 dispY = 960
 
 #Manual mode vars
-manualSpeed = 100 #150
+manualSpeed = 150 #150
 manual = False
 keysPressed = set()
 pumpOn = False
@@ -45,8 +45,6 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, yRes)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
 #Frame logic/specs and display
-xres, yres = xRes, yRes
-cx, cy = xres//2, yres//2
 frameNum = 0            
 frameSkip = 1       # how many frames for yolo to skip
 fontScale = 1       #1
@@ -55,6 +53,10 @@ dotScale = 3        #2
 serialFrameCount = 0
 serialFrames = 2    # limit number of frames sent (how many to skip)
 confidence = 0.5
+yOffset = -100 # negative is up, positive is down
+
+xres, yres = xRes, yRes
+cx, cy = xres//2, yres//2 + yOffset
 
 #Serial Stuffs:
 SERIAL_PORT = 'COM3' #MAKE SURE MATCHES WITH ARDUINO
@@ -77,9 +79,9 @@ def send_to_arduino(moveX, moveY, solenoid=0, pumpVal=0, mode=1, found=0):
         except serial.SerialException as e:
             print(f"Serial write error: {e}")
 
-print(" ------- KEYBOARD CONTROLS ------")
-print("SPACE - TOGGLE MANUAL/AUTO \n B - TOGGLE TRACK BEST \n ---------- MANUAL MODE ---------")
-print("WASD - NAVIGATE \n O - TOGGLE SOLENOID \n P - HOLD PUMP")
+print("------- KEYBOARD CONTROLS ------")
+print("SPACE - TOGGLE MANUAL/AUTO \nB - TOGGLE TRACK BEST \n---------- MANUAL MODE ---------")
+print("WASD - NAVIGATE \nO - TOGGLE SOLENOID \nP - HOLD PUMP")
 print(" --------------------------------")
 
 #Manual mode stuffs
@@ -153,7 +155,7 @@ while cap.isOpened():
                     center_x = int((x1 + x2) / 2)
                     center_y = int((y1 + y2) / 2)
                     moveX = int(center_x - xres / 2)
-                    moveY = int(center_y - yres / 2)
+                    moveY = int(center_y - cy)
  
                     cv2.circle(annotated_frame, (center_x, center_y), dotScale, (0, 0, 255), -1)
                     cls_idx = int(box.cls[0])
