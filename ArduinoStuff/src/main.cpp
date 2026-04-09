@@ -13,8 +13,8 @@ const int SOLENOID_PIN = 12;
 const int PUMP_PIN = 5;
 
 const int NEUTRAL = 90; // 0-180
-const int XfocusWidth = 150; // 500
-const int YfocusWidth = 85; // 300
+const int XfocusWidth = 160; // 160 (150+)
+const int YfocusWidth = 85; // 85 (80-90)
 const int sprayRad = 100; // 250 is big
 float yAngle = 0;
 
@@ -22,9 +22,9 @@ const unsigned long SERIAL_TIMEOUT = 2000; // ms
 unsigned long lastSerialTime = 0;
 bool solenoidOpen = false;
 
-const float xSpeed = 0.50; // (0-1)
-const float ySpeed = 0.01; // (0.01-0.5)
-const float autoPumpPower = 0.5; // (0-1)
+const float xSpeed = 0.55; // 0.5 (the higher the more overshoot)
+const float ySpeed = 0.02; // (0.01-0.5)
+const float autoPumpPower = 1; // (0-1)
 
 void setup() {
   Serial.begin(9600);
@@ -46,7 +46,7 @@ void setup() {
   analogWrite(PUMP_PIN, 0);
   lastSerialTime = millis();
 
-  TCCR2B = (TCCR2B & 0xF8) | 0x02;
+  //TCCR2B = (TCCR2B & 0xF8) | 0x02;
 }
 
 void loop() {
@@ -56,10 +56,11 @@ void loop() {
     buffer[len] = '\0';
     int mode, moveX, moveY, solenoid, pumpIn, detection;
     int received  = sscanf(buffer, "%d,%d,%d,%d,%d,%d", &mode, &moveX, &moveY, &solenoid, &pumpIn, &detection);
+    int pumpVal = map(pumpIn, 0, 5, 0, 255);
+
     if (received == 6) {
       lastSerialTime = millis();
       if (mode == 0) { // MANUAL
-        int pumpVal = map(pumpIn, 0, 5, 0, 255);
         analogWrite(PUMP_PIN, pumpVal);
         digitalWrite(SOLENOID_PIN, (solenoid == 1) ? HIGH : LOW);
         digitalWrite(LED_BUILTIN, pumpVal > 0 ? HIGH : LOW); // Diagnostic LED
@@ -89,15 +90,10 @@ void loop() {
       int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
       speedX = NEUTRAL - (int)((speedX-NEUTRAL) * xSpeed);
       servoX.write(speedX);
-      // if (digitalRead(LIM_X_PIN) == HIGH){
-      // } else {
-      //   servoX.write(NEUTRAL);
-      // }
+      
       float yRange = constrain(moveY, -YfocusWidth, YfocusWidth);
         yAngle = constrain(yAngle-(yRange * ySpeed), 0.0, 130.0); //max defl. = 130
         servoY.write((int)yAngle);
-      // if (digitalRead(LIM_Y_PIN) == HIGH){
-      // }
     }
   }
   //return to neutral if no instruction
