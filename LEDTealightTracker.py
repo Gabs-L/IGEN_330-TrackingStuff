@@ -31,7 +31,7 @@ dispX = 1280
 dispY = 960
 
 #Manual mode vars
-manualSpeed = 150 #150
+manualSpeed = 100 #150
 manual = False
 keysPressed = set()
 pumpOn = False
@@ -53,7 +53,7 @@ dotScale = 3        #2
 serialFrameCount = 0
 serialFrames = 2    # limit number of frames sent (how many to skip)
 confidence = 0.5
-yOffset = -100 # negative is up, positive is down
+yOffset = -0 # negative is up, positive is down
 
 xres, yres = xRes, yRes
 cx, cy = xres//2, yres//2 + yOffset
@@ -159,7 +159,8 @@ while cap.isOpened():
  
                     cv2.circle(annotated_frame, (center_x, center_y), dotScale, (0, 0, 255), -1)
                     cls_idx = int(box.cls[0])
-                    class_name = model.names[cls_idx]
+                    class_name = model.names[cls_idx] 
+
                     conf_val = float(box.conf[0])
                     label = f"{class_name} {conf_val:.0%}"
                     label_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, fontScale, fontThicc)

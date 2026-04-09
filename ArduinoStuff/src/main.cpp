@@ -15,7 +15,7 @@ const int PUMP_PIN = 5;
 const int NEUTRAL = 90; // 0-180
 const int XfocusWidth = 160; // 160 (150+)
 const int YfocusWidth = 85; // 85 (80-90)
-const int sprayRad = 100; // 250 is big
+const int sprayRad = 200; // 250 is big
 float yAngle = 0;
 
 int xBlocked = 0;
