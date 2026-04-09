@@ -5,8 +5,8 @@
 Servo servoX;
 Servo servoY;
 
-const int SERVOX_PIN = 9;
-const int SERVOY_PIN = 8;
+const int SERVOX_PIN = 10;
+const int SERVOY_PIN = 11;
 const int LIM_X_PIN = 6;
 const int LIM_Y_PIN = 7;
 const int SOLENOID_PIN = 12;
@@ -20,13 +20,11 @@ float yAngle = 0;
 
 const unsigned long SERIAL_TIMEOUT = 2000; // ms
 unsigned long lastSerialTime = 0;
-unsigned long solenoidOpened;
-const int pumpDelay = 100; // ms
 bool solenoidOpen = false;
 
 const float xSpeed = 0.50; // (0-1)
 const float ySpeed = 0.01; // (0.01-0.5)
-const float autoPumpPower = 1; // (0-1)
+const float autoPumpPower = 0.5; // (0-1)
 
 void setup() {
   Serial.begin(9600);
@@ -88,18 +86,18 @@ void loop() {
           }
         }
       }
-      if (digitalRead(LIM_X_PIN) == HIGH){
-        int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
-        speedX = NEUTRAL - (int)((speedX-NEUTRAL) * xSpeed);
-        servoX.write(speedX);
-      } else {
-        servoX.write(NEUTRAL);
-      }
-      if (digitalRead(LIM_Y_PIN) == HIGH){
-        float yRange = constrain(moveY, -YfocusWidth, YfocusWidth);
+      int speedX = map(constrain(moveX, -XfocusWidth, XfocusWidth), -XfocusWidth, XfocusWidth, 0, 180.0);
+      speedX = NEUTRAL - (int)((speedX-NEUTRAL) * xSpeed);
+      servoX.write(speedX);
+      // if (digitalRead(LIM_X_PIN) == HIGH){
+      // } else {
+      //   servoX.write(NEUTRAL);
+      // }
+      float yRange = constrain(moveY, -YfocusWidth, YfocusWidth);
         yAngle = constrain(yAngle-(yRange * ySpeed), 0.0, 130.0); //max defl. = 130
         servoY.write((int)yAngle);
-      }
+      // if (digitalRead(LIM_Y_PIN) == HIGH){
+      // }
     }
   }
   //return to neutral if no instruction
